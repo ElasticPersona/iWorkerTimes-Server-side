@@ -1,24 +1,21 @@
 var mongo = require('mongodb');
+var mongoose = require('mongoose');
+//Schema定義を読み込む
+var worksCollection = require('../models/works').worksCollection;
 
-var Server = mongo.Server,
-    Db = mongo.Db,
-    BSON = mongo.BSONPure;
+// DB接続
+mongoose.connect('mongodb://localhost:27017/workdb',
+	function(err) {
+		if (err) {
+			console.log(err);
+		} else {
+			console.log("connection success!");
+        	console.log("Connected to 'workdb' database");
+		}
+	}
+);
 
-var server = new Server('localhost', 27017, {auto_reconnect: true});
-db = new Db('workdb', server);
-
-db.open(function(err, db){
-    if(!err){
-        console.log("Connected to 'workdb' database");
-        db.collection('works', {strict:true}, function(err, collection){
-            if(err){
-                console.log("The 'works' collection doesn't exist. Creating it with sample data...");
-            }
-        });
-    }
-});
-
-// 1桁の数字を0埋め2桁にする
+// 1桁の数字を0埋め2桁にする関数
 var toDoubleDigits = function(num) {
     num += "";
     if (num.length === 1) {
@@ -28,13 +25,14 @@ var toDoubleDigits = function(num) {
 };
 
 //スタッフ全件検索
-exports.findAll = function(req, res){
-    db.collection('works', function(err, collection){
-        collection.find().toArray(function(err, items){
-	    console.log(items);
-            res.send({"results":items});
-        });
-    });
+exports.findAll = function(req, res) {
+	worksCollection.find({}, function(err, data) {
+		if (err) {
+			console.log(err);
+		} else {
+			res.send({"results": data});
+		}
+	});
 };
 
 //ユーザ名指定で今日の打刻を検索
@@ -53,55 +51,87 @@ exports.findTodayByName = function(req, res){
     var firstTime = new Date(year + "-" + month + "-" + day + "T00:00:00.000Z");
     var lastTime  = new Date(year + "-" + month + "-" + day + "T23:59:59.000Z");
 
-    db.collection('works', function(err, collection){
-      if (err) {
-        console.log("db.collection.error");
-      }else{
-        collection.find({ "userName": userName, "workIn": { "$gte": firstTime, "$lte": lastTime }}).toArray(function(err, items){
-            console.log(items);
-            res.send({"results":items});
-        });
-      }
-    });
+	worksCollection.find({ "userName": userName, "workIn": { "$gte": firstTime, "$lte": lastTime }}, function(err, data) {
+		if (err) {
+			console.log(err);
+		} else {
+			res.send({"results": data});
+		}
+	});
 };
 
 //ユーザ名指定検索
 exports.findByName = function(req, res){
-    var id = req.params.id;
-    console.log('Retrieving work: ' + id);
-    db.collection('works', function(err, collection){
-        collection.findOne({'_id':new BSON.ObjectID(id)}, function(err, item){
-            res.send(items);
-        });
-    });
+    var userName = req.body.userName;
+	worksCollection.find({ "userName": userName }, function(err, data) {
+		if (err) {
+			console.log(err);
+		} else {
+			res.send({"results": data});
+		}
+	});
 };
 
 //打刻更新
 exports.addWork = function(req, res){
-console.log(req.body);
-    var work = req.body;
-    //console.log('Adding work: ' + JSON.stringify(work));
-    
+
+	//ユーザ名指定で現在の打刻状況を取得したうえで打刻更新処理を行う
+    //ユーザ名を取得
+    var userName = req.body.userName;
+	var comment = req.body.comment;
+
+    //今日の日付を取得
+    var today = new Date();
+    var year = today.getFullYear();
+    var month = toDoubleDigits(today.getMonth() + 1);
+    var day = toDoubleDigits(today.getDate());
+
+    //Node上のmongoDBで日付検索するために整形
+    var firstTime = new Date(year + "-" + month + "-" + day + "T00:00:00.000Z");
+    var lastTime  = new Date(year + "-" + month + "-" + day + "T23:59:59.000Z");
+	var results = "";
+
     // 日本時間（+9時間）にして現在時刻で登録する
     var punched = new Date()
         punched.setHours(punched.getHours()+9);
 
-    var params = {
-      "userName" : work.userName,
-      "workIn"   : punched,
-      "workOut"  : punched,
-      "comment"  : work.comment
-    }
+	worksCollection.findOne({ "userName": userName, "workIn": { "$gte": firstTime, "$lte": lastTime }}, function(err, data) {
+		if (err) {
+			console.log(err);
+		} else {
+			if (data == null) {
+				//出社打刻
+				var works = new worksCollection();
+					works.userName = userName;
+					works.workIn   = punched;
+					works.workInComment = comment;
 
-    db.collection('works', function(err, collection){
-        collection.insert(params, {safe:true}, function(err, result){
-            if(err){
-                res.send({'error':'An error has occurred'});
-            }else{
-                console.log('Success: ' + JSON.stringify(result[0]));
-                res.send(result[0]);
-            }
-        });
-    });
+				//保存処理
+				works.save(function(err) {
+					if (err) {
+						console.log(err);
+					}
+				});
+			} else if (data != null && data.workIn != null && data.workOut == null) {
+				//退勤打刻
+    			var params = {
+    			  "workOut"			: punched,
+    			  "workOutComment"  : comment
+				}
+				//保存処理
+				worksCollection.update(
+							{ "userName": userName, "workIn": { "$gte": firstTime, "$lte": lastTime }},
+							{ $set : params }, 
+							{ upsert: false, multi: true }, function(err) {
+								if (err) {
+									console.log(err);
+								}
+				});
+			} else if (data != null && data.workIn != null && data.workOut != null) {
+				//終業
+				console.log("終業済み");
+			}
+		}
+	});
 }
 
