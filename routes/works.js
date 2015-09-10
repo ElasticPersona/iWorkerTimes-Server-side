@@ -91,9 +91,10 @@ exports.addWork = function(req, res){
     var lastTime  = new Date(year + "-" + month + "-" + day + "T23:59:59.000Z");
 	var results = "";
 
-    // 日本時間（+9時間）にして現在時刻で登録する
+    // 現在時刻で登録する
     var punched = new Date()
-        punched.setHours(punched.getHours()+9);
+    // 日本時間（+9時間）にして現在時刻で登録する
+   	//	punched.setHours(punched.getHours()+9);
 
 	worksCollection.findOne({ "userName": userName, "workIn": { "$gte": firstTime, "$lte": lastTime }}, function(err, data) {
 		if (err) {
