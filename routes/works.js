@@ -24,7 +24,7 @@ var toDoubleDigits = function(num) {
   return num;
 };
 
-//スタッフ全件検索
+//全件取得
 exports.findAll = function(req, res) {
 	worksCollection.find({}, function(err, data) {
 		if (err) {
@@ -35,7 +35,19 @@ exports.findAll = function(req, res) {
 	});
 };
 
-//ユーザ名指定で今日の打刻を検索
+//ユーザ名指定全件取得（日時降順）
+exports.findByName = function(req, res){
+    var userName = req.body.userName;
+	worksCollection.find({ "userName": userName }, {}, { sort:{ workIn: -1 }}, function(err, data) {
+		if (err) {
+			console.log(err);
+		} else {
+			res.send({"results": data});
+		}
+	});
+};
+
+//ユーザ名指定で今日の打刻を取得
 exports.findTodayByName = function(req, res){
     
     //ユーザ名を取得
@@ -52,18 +64,6 @@ exports.findTodayByName = function(req, res){
     var lastTime  = new Date(year + "-" + month + "-" + day + "T23:59:59.000Z");
 
 	worksCollection.find({ "userName": userName, "workIn": { "$gte": firstTime, "$lte": lastTime }}, function(err, data) {
-		if (err) {
-			console.log(err);
-		} else {
-			res.send({"results": data});
-		}
-	});
-};
-
-//ユーザ名指定検索
-exports.findByName = function(req, res){
-    var userName = req.body.userName;
-	worksCollection.find({ "userName": userName }, function(err, data) {
 		if (err) {
 			console.log(err);
 		} else {

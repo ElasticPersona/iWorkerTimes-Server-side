@@ -12,7 +12,7 @@ app.use(bodyParser.json())
 work = require('./routes/works');
 
 app.get('/', work.findAll);
-app.get('/work', work.findAll);
+app.post('/work', work.findByName);
 app.post('/work/today', work.findTodayByName);
 app.post('/work', work.addWork);
 //app.put('/works/:id', work.upateStaff);
