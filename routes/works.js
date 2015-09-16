@@ -30,6 +30,7 @@ exports.findAll = function(req, res) {
 		if (err) {
 			console.log(err);
 		} else {
+			console.log(data);
 			res.send({"results": data});
 		}
 	});
@@ -42,6 +43,7 @@ exports.findByName = function(req, res){
 		if (err) {
 			console.log(err);
 		} else {
+			console.log(data);
 			res.send({"results": data});
 		}
 	});
@@ -106,6 +108,8 @@ exports.addWork = function(req, res){
 					works.userName = userName;
 					works.workIn   = punched;
 					works.workInComment = comment;
+
+				console.log(works);
 
 				//保存処理
 				works.save(function(err) {
