@@ -1,0 +1,11 @@
+include head.jade
+
+title!= title
+body(ng-app='workApp', ng-controller='UserListCtrl')
+p
+h2!= title 
+p
+
+div(ng-repeat='user in data')
+  input(type='button', class='btn btn-success', value='{{user}}')
+  p

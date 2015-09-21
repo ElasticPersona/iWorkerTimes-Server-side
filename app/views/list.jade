@@ -1,0 +1,18 @@
+form(name='edit', action='/edit', method='post')
+table(class='table table-striped')
+  thead
+    th 名前
+    th 出勤時刻
+    th 退勤時刻
+    th 出勤時コメント
+    th 退勤時コメント
+    th 編集
+  tbody
+    tr(ng-repeat='user in data')
+      td(data-title='\'userName\'') {{user.userName}}
+      td(data-title='\'workIn\'') {{user.workIn}}
+      td(data-title='\'workOut\'') {{user.workOut}}
+      td(data-title='\'workInComment\'') {{user.workInComment}}
+      td(data-title='\'workOutComment\'') {{user.workOutComment}}
+      td
+        input(type='button', id='edit', name='edit', value='編集')
