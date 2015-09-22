@@ -1,27 +1,36 @@
-var app = angular.module('app', ['ngResource', 'ngRoute']);
-var worksCollection = require('../models/works');
+var workApp = angular.module('workApp', ['ngResource', 'ngRoute', 'ngTable']);
+//var worksCollection = require('../scripts/models/works');
+var findAllWorkList = 'https://52.69.128.126:3000/';
+var findAllUser = 'https://52.69.128.126:3000/user';
 
-app.config(function($routeProvider) {
+workApp.config(function($locationProvider, $routeProvider) {
   $routeProvider.when('/worklist', {
-    templateUrl: '../../views/list.html', controller: 'ListCtrl'
+    templateUrl: '../../views/list.jade', controller: 'ListCtrl'
+  }).when('/userlist', {
+    templateUrl: '../../views/userlist.jade', controller: 'UserListCtrl'
   }).when('/users/:_id', {
-    templateUrl: '../../views/edit.html', controller: 'EditCtrl'
+    templateUrl: '../../views/edit.jade', controller: 'EditCtrl'
   }).otherwise({
     redirectTo: '/worklist'
   });
 });
 
-app.controller('ListCtrl', function($scope, $route) {
-  $scope.works = worksCollection.query();
-  console.log($scope.works);
-  //$scope.delete = function(_id) {
-  //  User.delete({_id: _id}, function() {
-  //    $route.reload();
-  //  });
-  //};
+workApp.controller('ListCtrl', function($scope, $http, $location) {
+  $http.get(findAllWorkList)
+  	.success(function(data, status, headers, config) {
+	  $scope.data = data.results;
+	});
 });
 
-app.controller('EditCtrl', function($scope, $routeParams, $location) {
+workApp.controller('UserListCtrl', function($scope, $http, $location) {
+  $http.get(findAllUser)
+  	.success(function(data, status, headers, config) {
+	  console.log(data.results);
+	  $scope.data = data.results;
+	});
+});
+
+workApp.controller('EditCtrl', function($scope, $routeParams, $location) {
   if ($routeParams._id != 'new') $scope.user = User.get({_id: $routeParams._id});
   $scope.edit = function() {
     User.save($scope.user, function() {

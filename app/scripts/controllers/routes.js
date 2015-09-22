@@ -24,9 +24,21 @@ var toDoubleDigits = function(num) {
   return num;
 };
 
+//全ユーザ名取得
+exports.findAllUser = function(req, res) {
+	worksCollection.distinct('userName', {}, function(err, data) {
+		if (err) {
+			console.log(err);
+		} else {
+			console.log(data);
+			res.send({"results": data});
+		}
+	});
+};
+
 //全件取得
 exports.findAll = function(req, res) {
-	worksCollection.find({}, function(err, data) {
+	worksCollection.find({}, {}, { sort:{ workIn: -1 }}, function(err, data) {
 		if (err) {
 			console.log(err);
 		} else {
