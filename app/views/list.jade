@@ -10,8 +10,8 @@ table(class='table table-striped')
   tbody
     tr(ng-repeat='user in data')
       td(data-title='\'userName\'') {{user.userName}}
-      td(data-title='\'workIn\'') {{user.workIn}}
-      td(data-title='\'workOut\'') {{user.workOut}}
+      td(data-title='\'workIn\'') {{user.workIn | date: 'yyyy年MM月dd日 HH時mm分ss秒'}}
+      td(data-title='\'workOut\'') {{user.workOut | date: 'yyyy年MM月dd日 HH時mm分ss秒'}}
       td(data-title='\'workInComment\'') {{user.workInComment}}
       td(data-title='\'workOutComment\'') {{user.workOutComment}}
       td
